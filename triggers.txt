@@ -1,0 +1,71 @@
+CREATE DATABASE library;
+USE library;
+
+
+
+CREATE TABLE Books (
+    AccNo INT PRIMARY KEY,
+    Title VARCHAR(100),
+    Author VARCHAR(100),
+    Publisher VARCHAR(100),
+    Count INT
+);
+
+
+INSERT INTO Books (AccNo, Title, Author, Publisher, Count)
+VALUES
+(101, 'Database Systems', 'Elmasri', 'Pearson', 5),
+(102, 'Operating Systems', 'Silberschatz', 'Wiley', 3),
+(103, 'Java Programming', 'James Gosling', 'McGraw Hill', 4);
+
+
+
+CREATE TABLE Library_Audit (
+    AccNo INT,
+    Title VARCHAR(100),
+    Author VARCHAR(100),
+    Publisher VARCHAR(100),
+    Count INT,
+    ActionType VARCHAR(20),
+    ActionTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+DELIMITER $$
+
+CREATE TRIGGER before_book_delete
+BEFORE DELETE ON Books
+FOR EACH ROW
+BEGIN
+    INSERT INTO Library_Audit (AccNo, Title, Author, Publisher, Count, ActionType)
+    VALUES (OLD.AccNo, OLD.Title, OLD.Author, OLD.Publisher, OLD.Count, 'DELETED');
+END $$
+
+DELIMITER ;
+
+
+
+DELIMITER $$
+
+CREATE TRIGGER after_book_update
+AFTER UPDATE ON Books
+FOR EACH ROW
+BEGIN
+    INSERT INTO Library_Audit (AccNo, Title, Author, Publisher, Count, ActionType)
+    VALUES (NEW.AccNo, NEW.Title, NEW.Author, NEW.Publisher, NEW.Count, 'UPDATED');
+END $$
+
+DELIMITER ;
+
+
+
+DELETE FROM Books WHERE AccNo = 103;
+
+
+UPDATE Books SET Count = 10 WHERE AccNo = 101;
+
+
+SELECT * FROM Library_Audit;
+
+

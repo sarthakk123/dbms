@@ -1,0 +1,40 @@
+CREATE DATABASE BankDB;
+USE BankDB;
+
+CREATE TABLE Customer (
+    CustomerID INT PRIMARY KEY,
+    Name VARCHAR(100),
+    Address VARCHAR(200),
+    Phone VARCHAR(15),
+    Email VARCHAR(100)
+);
+
+CREATE TABLE Account (
+    AccountID INT PRIMARY KEY,
+    CustomerID INT,
+    AccountType VARCHAR(50),
+    Balance DECIMAL(12,2) CHECK (Balance >= 0),
+    CreatedDate DATE DEFAULT CURRENT_DATE,
+    FOREIGN KEY (CustomerID) REFERENCES Customer(CustomerID)
+);
+
+CREATE TABLE Transaction (
+    TransactionID INT PRIMARY KEY,
+    AccountID INT,
+    TransactionType VARCHAR(10) CHECK (TransactionType IN ('Credit','Debit')),
+    Amount DECIMAL(12,2),
+    TransactionDate DATE DEFAULT CURRENT_DATE,
+    FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
+);
+
+CREATE VIEW CustomerAccountView AS
+SELECT 
+    c.Name,
+    a.AccountID,
+    a.Balance
+FROM 
+    Customer c
+JOIN 
+    Account a ON c.CustomerID = a.CustomerID;
+
+CREATE INDEX idx_TransactionDate ON Transaction(TransactionDate);

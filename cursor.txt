@@ -1,0 +1,113 @@
+CREATE TABLE Student_Result (
+    stud_id NUMBER PRIMARY KEY,
+    name VARCHAR2(50),
+    dept VARCHAR2(20),
+    total_mark NUMBER
+);
+
+INSERT INTO Student_Result VALUES (1, 'John', 'CSE', 450);
+INSERT INTO Student_Result VALUES (2, 'Alice', 'ECE', 420);
+INSERT INTO Student_Result VALUES (3, 'Ravi', 'CSE', 480);
+INSERT INTO Student_Result VALUES (4, 'Meena', 'EEE', 410);
+COMMIT;
+
+
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+    v_rows NUMBER;
+BEGIN
+    INSERT INTO Student_Result VALUES (5, 'Kiran', 'CSE', 465);
+    v_rows := SQL%ROWCOUNT;
+    DBMS_OUTPUT.PUT_LINE('Number of rows affected: ' || v_rows);
+END;
+/
+
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+    v_name Student_Result.name%TYPE;
+    v_total Student_Result.total_mark%TYPE;
+
+    CURSOR c_student IS
+        SELECT name, total_mark FROM Student_Result;
+BEGIN
+    OPEN c_student;
+    LOOP
+        FETCH c_student INTO v_name, v_total;
+        EXIT WHEN c_student%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE('Name: ' || v_name || ', Total Marks: ' || v_total);
+    END LOOP;
+    CLOSE c_student;
+END;
+/
+
+
+SET SERVEROUTPUT ON;
+
+BEGIN
+    FOR rec IN (SELECT name, total_mark FROM Student_Result) LOOP
+        DBMS_OUTPUT.PUT_LINE('Name: ' || rec.name || ', Total Marks: ' || rec.total_mark);
+    END LOOP;
+END;
+/
+
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+    CURSOR c_dept(p_dept Student_Result.dept%TYPE) IS
+        SELECT name, total_mark
+        FROM Student_Result
+        WHERE dept = p_dept;
+
+    v_name Student_Result.name%TYPE;
+    v_total Student_Result.total_mark%TYPE;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Students in CSE Department:');
+    OPEN c_dept('CSE');
+    LOOP
+        FETCH c_dept INTO v_name, v_total;
+        EXIT WHEN c_dept%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE('Name: ' || v_name || ', Total Marks: ' || v_total);
+    END LOOP;
+    CLOSE c_dept;
+END;
+/
+
+
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+    CURSOR c_update IS
+        SELECT stud_id, total_mark
+        FROM Student_Result
+        WHERE dept = 'CSE'
+        FOR UPDATE;
+
+    v_id Student_Result.stud_id%TYPE;
+    v_total Student_Result.total_mark%TYPE;
+BEGIN
+    OPEN c_update;
+    LOOP
+        FETCH c_update INTO v_id, v_total;
+        EXIT WHEN c_update%NOTFOUND;
+        UPDATE Student_Result
+        SET total_mark = v_total + 10
+        WHERE CURRENT OF c_update;
+        DBMS_OUTPUT.PUT_LINE('Updated Student ID: ' || v_id);
+    END LOOP;
+    CLOSE c_update;
+    COMMIT;
+END;
+/
+
+
+
+SELECT * FROM Student_Result;
+
+
+

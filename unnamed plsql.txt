@@ -1,0 +1,81 @@
+CREATE TABLE Borrower (
+    Roll_no NUMBER PRIMARY KEY,
+    Name VARCHAR2(50),
+    DateOfIssue DATE,
+    NameOfBook VARCHAR2(100),
+    Status CHAR(1)
+);
+
+
+CREATE TABLE Fine (
+    Roll_no NUMBER,
+    Date_ DATE,
+    Amt NUMBER
+);
+
+
+
+
+INSERT INTO Borrower VALUES (1, 'John',  TO_DATE('2025-10-10', 'YYYY-MM-DD'), 'DBMS', 'I');
+INSERT INTO Borrower VALUES (2, 'Alice', TO_DATE('2025-10-20', 'YYYY-MM-DD'), 'JAVA', 'I');
+INSERT INTO Borrower VALUES (3, 'Ravi',  TO_DATE('2025-11-05', 'YYYY-MM-DD'), 'PYTHON', 'I');
+COMMIT;
+
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+    v_roll Borrower.Roll_no%TYPE;
+    v_book Borrower.NameOfBook%TYPE;
+    v_date_issue Borrower.DateOfIssue%TYPE;
+    v_days NUMBER;
+    v_fine NUMBER := 0;
+    e_invalid_borrower EXCEPTION;
+BEGIN
+    v_roll := &Roll_No;
+    v_book := '&Book_Name';
+
+    SELECT DateOfIssue INTO v_date_issue
+    FROM Borrower
+    WHERE Roll_no = v_roll AND NameOfBook = v_book AND Status = 'I';
+
+    v_days := TRUNC(SYSDATE - v_date_issue);
+
+    DBMS_OUTPUT.PUT_LINE('Book issued for ' || v_days || ' days.');
+
+    IF v_days > 30 THEN
+        v_fine := v_days * 50;
+    ELSIF v_days >= 15 AND v_days <= 30 THEN
+        v_fine := v_days * 5;
+    ELSE
+        v_fine := 0;
+    END IF;
+
+    UPDATE Borrower
+    SET Status = 'R'
+    WHERE Roll_no = v_roll AND NameOfBook = v_book;
+
+    DBMS_OUTPUT.PUT_LINE('Book status updated to Returned (R).');
+
+    IF v_fine > 0 THEN
+        INSERT INTO Fine (Roll_no, Date_, Amt)
+        VALUES (v_roll, SYSDATE, v_fine);
+        DBMS_OUTPUT.PUT_LINE('Fine amount Rs ' || v_fine || ' added to Fine table.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('No fine applicable.');
+    END IF;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('Error: No issued book found for given Roll_no and Book name.');
+    WHEN e_invalid_borrower THEN
+        DBMS_OUTPUT.PUT_LINE('Error: Invalid borrower details.');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Unexpected error: ' || SQLERRM);
+END;
+/
+
+
+SELECT * FROM Borrower;
+SELECT * FROM Fine;
+
